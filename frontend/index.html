@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Market Tracker</title>
+
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+    <h1>Farm Market Tracker</h1>
+    <form id="cropForm">
+        <label for="cropName">Crop Name:</label>
+        <input type="text" id="cropName" required><br>
+
+        <label for="cropType">Crop Type:</label>
+        <input type="text" id="cropType" required><br>
+
+        <label for="season">Season:</label>
+        <input type="text" id="season" required><br>
+
+        <label for="cropId">Crop ID:</label>
+        <input type="number" id="cropId" required><br>
+
+        <label for="price">Price:</label>
+        <input type="number" id="price" required><br>
+
+        <button type="submit">Add Crop</button>
+    </form>
+
+    <h2>Crops List</h2>
+    <ul id="cropsList"></ul>
+
+    <script>
+        // Get the form and crops list container
+        const form = document.getElementById('cropForm');
+        const cropsListContainer = document.getElementById('cropsList');
+
+        // Handle form submission
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();  // Prevent the default form submission
+
+            // Get form values
+            const cropName = document.getElementById('cropName').value;
+            const cropType = document.getElementById('cropType').value;
+            const season = document.getElementById('season').value;
+            const cropId = document.getElementById('cropId').value;
+            const price = document.getElementById('price').value;
+
+            // Send form data to the server (POST request)
+            fetch('http://127.0.0.1:4000/api/crops', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    crop_name: cropName,
+                    crop_type: cropType,
+                    season: season,
+                    crop_id: cropId,
+                    price: price
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === "Crop added successfully") {
+                    // If the crop is successfully added, update the crops list
+                    fetchCropsList();  // This will fetch the list and update the DOM
+                } else {
+                    // Display an error message
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error submitting the form.');
+            });
+        });
+
+        // Fetch the list of crops from the server
+        function fetchCropsList() {
+            fetch('http://127.0.0.1:4000/api/crops')  // Fetch the list of crops from the server
+            .then(response => response.json())
+            .then(crops => {
+                // Clear the existing crops list in the DOM
+                cropsListContainer.innerHTML = '';
+
+                // Loop through each crop and add it to the list
+                crops.forEach(crop => {
+                    const cropElement = document.createElement('li');
+                    cropElement.textContent = `${crop.crop_name} (${crop.crop_type}) - ${crop.season} - $${crop.price || 'N/A'}`;
+                    cropsListContainer.appendChild(cropElement);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error fetching the crops list.');
+            });
+        }
+
+        // Fetch the crops list when the page loads
+        document.addEventListener('DOMContentLoaded', fetchCropsList);
+    </script>
+
+</body>
+</html>
